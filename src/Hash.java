@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 public class Hash {
 
-    public static final String[] constants = {
+    private static final String[] constants = {
             ("01000010100010100010111110011000"), ("01110001001101110100010010010001"), ("10110101110000001111101111001111"),
             ("11101001101101011101101110100101"), ("00111001010101101100001001011011"), ("01011001111100010001000111110001"),
             ("10010010001111111000001010100100"), ("10101011000111000101111011010101"), ("11011000000001111010101010011000"),
@@ -28,14 +28,25 @@ public class Hash {
             ("11000110011100010111100011110010")
     };
 
+    private static final String[] initialValues = {
+            ("01101010000010011110011001100111"), ("10111011011001111010111010000101"), ("00111100011011101111001101110010"),
+            ("10100101010011111111010100111010"), ("01010001000011100101001001111111"), ("10011011000001010110100010001100"),
+            ("00011111100000111101100110101011"), ("01011011111000001100110100011001")
+    };
+
+    private static String[] compressionValues = {
+            ("01101010000010011110011001100111"), ("10111011011001111010111010000101"), ("00111100011011101111001101110010"),
+            ("10100101010011111111010100111010"), ("01010001000011100101001001111111"), ("10011011000001010110100010001100"),
+            ("00011111100000111101100110101011"), ("01011011111000001100110100011001")
+    };
+
     public static void main(String[] args) {
-        String message = stringToBytes("abc");
+        String input = "abc";
+        String message = stringToBytes(input);
         String paddedMessage = padMessage(message);
         ArrayList<ArrayList<String>> messageSchedules = messageBlocks(paddedMessage);
-        rotateRight(messageSchedules.get(0).get(0), 10);
-        shiftRight(messageSchedules.get(0).get(0), 3);
-        choice("00000000111111110000000011111111", "00000000000000001111111111111111", "11111111111111110000000000000000");
-        majority("00000000111111110000000011111111", "00000000000000001111111111111111", "11111111111111110000000000000000");
+        compression(messageSchedules);
+        System.out.println(hash(compressionValues));
     }
 
     //converts String input to bytes by converting each char to int (ASCII)
@@ -71,8 +82,14 @@ public class Hash {
         for(int i = 0; i < messageBlocksNumber; i++){
             String currentBlock = paddedMessage.substring(512 * i, 512 + 512*i);
             ArrayList<String> messageSchedules = new ArrayList<>();
-            for(int j = 0; j < 16; j++){
+            int j;
+            for(j = 0; j < 16; j++){
                 messageSchedules.add(currentBlock.substring(32*j, 32 + 32*j));
+            }
+            while(messageSchedules.size() < 64){
+                String newMessage = sum(sigma1(messageSchedules.get(j-2)), messageSchedules.get(j-7), sigma0(messageSchedules.get(j-15)), messageSchedules.get(j-16));
+                messageSchedules.add(newMessage);
+                j++;
             }
             messageBlocks.add(messageSchedules);
         }
@@ -94,13 +111,38 @@ public class Hash {
     }
 
     //counts sum of given binary values
-    private static String count(String binary1, String binary2, String binary3, String binary4){
+    private static String sum(String binary1, String binary2, String binary3, String binary4, String binary5){
+        BigInteger dec1 = new BigInteger(binary1, 2);
+        BigInteger dec2 = new BigInteger(binary2, 2);
+        BigInteger dec3 = new BigInteger(binary3, 2);
+        BigInteger dec4 = new BigInteger(binary4, 2);
+        BigInteger dec5 = new BigInteger(binary5, 2);
+
+        BigInteger sum = dec1.add(dec2).add(dec3).add(dec4).add(dec5);
+        String countResult = sum.mod(new BigInteger("4294967296")).toString(2);
+        String repeated = new String(new char[32 - countResult.length()]).replace("\0", "0");
+
+        return repeated + countResult;
+    }
+
+    private static String sum(String binary1, String binary2, String binary3, String binary4){
         BigInteger dec1 = new BigInteger(binary1, 2);
         BigInteger dec2 = new BigInteger(binary2, 2);
         BigInteger dec3 = new BigInteger(binary3, 2);
         BigInteger dec4 = new BigInteger(binary4, 2);
 
         BigInteger sum = dec1.add(dec2).add(dec3).add(dec4);
+        String countResult = sum.mod(new BigInteger("4294967296")).toString(2);
+        String repeated = new String(new char[32 - countResult.length()]).replace("\0", "0");
+
+        return repeated + countResult;
+    }
+
+    private static String sum(String binary1, String binary2){
+        BigInteger dec1 = new BigInteger(binary1, 2);
+        BigInteger dec2 = new BigInteger(binary2, 2);
+
+        BigInteger sum = dec1.add(dec2);
         String countResult = sum.mod(new BigInteger("4294967296")).toString(2);
         String repeated = new String(new char[32 - countResult.length()]).replace("\0", "0");
 
@@ -172,6 +214,34 @@ public class Hash {
             else newBinaryValue.append("1");
         }
         return newBinaryValue.toString();
+    }
+
+    private static void compression(ArrayList<ArrayList<String>> messageSchedules){
+        for(ArrayList<String> messageSchedule : messageSchedules){
+            int i = 0;
+            for(String message : messageSchedule){
+                String temp1 = sum(usigma1(compressionValues[4]), choice(compressionValues[4], compressionValues[5], compressionValues[6]), compressionValues[7], message, constants[i]);
+                String temp2 = sum(usigma0(compressionValues[0]), majority(compressionValues[0], compressionValues[1], compressionValues[2]));
+
+                System.arraycopy(compressionValues, 0, compressionValues, 1, compressionValues.length - 1);
+                compressionValues[0] = sum(temp1, temp2);
+                compressionValues[4] = sum(compressionValues[4], temp1);
+                i++;
+            }
+            for(int j = 0; j < compressionValues.length; j++){
+                compressionValues[j] = sum(initialValues[j], compressionValues[j]);
+            }
+        }
+    }
+
+    private static String hash(String[] compressionValues){
+        StringBuilder hash = new StringBuilder();
+        for(String compressionValue : compressionValues){
+            String hexStr = new BigInteger(compressionValue, 2).toString(16);
+            hash.append(hexStr);
+        }
+
+        return hash.toString();
     }
 
 }
