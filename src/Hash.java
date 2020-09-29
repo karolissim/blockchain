@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Hash {
@@ -28,11 +29,13 @@ public class Hash {
     };
 
     public static void main(String[] args) {
-        String message = stringToBytes("Labas Ka veiki ai astai nieko visai ramiai chilinu namie. Bet va greitai reieks eiit i unika");
+        String message = stringToBytes("abc");
         String paddedMessage = padMessage(message);
         ArrayList<ArrayList<String>> messageSchedules = messageBlocks(paddedMessage);
         rotateRight(messageSchedules.get(0).get(0), 10);
         shiftRight(messageSchedules.get(0).get(0), 3);
+        choice("00000000111111110000000011111111", "00000000000000001111111111111111", "11111111111111110000000000000000");
+        majority("00000000111111110000000011111111", "00000000000000001111111111111111", "11111111111111110000000000000000");
     }
 
     //converts String input to bytes by converting each char to int (ASCII)
@@ -49,9 +52,15 @@ public class Hash {
     //pads message to contain 512 bit chunks
     private static String padMessage(String message){
         int pad = 512 - message.length()%512;
-        String messageLengthBinary = Integer.toBinaryString(message.length());
-        String repeated = new String(new char[pad-messageLengthBinary.length()]).replace("\0", "0");
-        return message + repeated + messageLengthBinary;
+        if(pad >= 65){
+            String messageLengthBinary = Integer.toBinaryString(message.length());
+            String repeated = new String(new char[pad - 1 - messageLengthBinary.length()]).replace("\0", "0");
+            return message + "1" + repeated + messageLengthBinary;
+        } else {
+            String messageLengthBinary = Integer.toBinaryString(message.length());
+            String repeated = new String(new char[pad + 511 - messageLengthBinary.length()]).replace("\0", "0");
+            return message + "1" + repeated + messageLengthBinary;
+        }
     }
 
     //splits each message block of 512 bits into message schedules of 32 bits
@@ -67,7 +76,6 @@ public class Hash {
             }
             messageBlocks.add(messageSchedules);
         }
-
         return messageBlocks;
     }
 
@@ -85,5 +93,85 @@ public class Hash {
         return repeated + substringMessage;
     }
 
+    //counts sum of given binary values
+    private static String count(String binary1, String binary2, String binary3, String binary4){
+        BigInteger dec1 = new BigInteger(binary1, 2);
+        BigInteger dec2 = new BigInteger(binary2, 2);
+        BigInteger dec3 = new BigInteger(binary3, 2);
+        BigInteger dec4 = new BigInteger(binary4, 2);
+
+        BigInteger sum = dec1.add(dec2).add(dec3).add(dec4);
+        String countResult = sum.mod(new BigInteger("4294967296")).toString(2);
+        String repeated = new String(new char[32 - countResult.length()]).replace("\0", "0");
+
+        return repeated + countResult;
+    }
+
+    //xor operation
+    private static String xor(String binary1, String binary2, String binary3){
+        StringBuilder newBinary = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        for(int i = 0; i < binary1.length(); i++){
+            temp.append(binary1.charAt(i)^binary2.charAt(i));
+            newBinary.append(temp.charAt(i)^binary3.charAt(i));
+        }
+        return newBinary.toString();
+    }
+
+    private static String sigma0(String input){
+        String firstRotation = rotateRight(input, 7);
+        String secondRotation = rotateRight(input, 18);
+        String shift = shiftRight(input, 3);
+        return xor(firstRotation, secondRotation, shift);
+    }
+
+    private static String sigma1(String input){
+        String firstRotation = rotateRight(input, 17);
+        String secondRotation = rotateRight(input, 19);
+        String shift = shiftRight(input, 10);
+        return xor(firstRotation, secondRotation, shift);
+    }
+
+    private static String usigma0(String input){
+        String firstRotation = rotateRight(input, 2);
+        String secondRotation = rotateRight(input, 13);
+        String thirdRotation = rotateRight(input, 22);
+        return xor(firstRotation, secondRotation, thirdRotation);
+    }
+
+    private static String usigma1(String input){
+        String firstRotation = rotateRight(input, 6);
+        String secondRotation = rotateRight(input, 11);
+        String thirdRotation = rotateRight(input, 25);
+        return xor(firstRotation, secondRotation, thirdRotation);
+    }
+
+    private static String choice(String binary1, String binary2, String binary3){
+        StringBuilder newBinaryValue = new StringBuilder();
+        for(int i = 0; i < binary1.length(); i++){
+            if(binary1.charAt(i) == '0')
+                newBinaryValue.append(binary3.charAt(i));
+            else
+                newBinaryValue.append(binary2.charAt(i));
+        }
+        return newBinaryValue.toString();
+    }
+
+    private static String majority(String binary1, String binary2, String binary3){
+        StringBuilder newBinaryValue = new StringBuilder();
+        for(int i = 0; i < binary1.length(); i++){
+            int amountOfZeroes = 0;
+            int amountOfOnes = 0;
+            if(binary1.charAt(i) == '0') amountOfZeroes++;
+            else amountOfOnes++;
+            if(binary2.charAt(i) == '0') amountOfZeroes++;
+            else amountOfOnes++;
+            if(binary3.charAt(i) == '0') amountOfZeroes++;
+            else amountOfOnes++;
+            if(amountOfZeroes > amountOfOnes) newBinaryValue.append("0");
+            else newBinaryValue.append("1");
+        }
+        return newBinaryValue.toString();
+    }
 
 }
