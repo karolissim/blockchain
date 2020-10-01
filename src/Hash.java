@@ -1,4 +1,7 @@
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class Hash {
@@ -28,7 +31,14 @@ public class Hash {
             ("11000110011100010111100011110010")
     };
 
-    private static final String[] initialValues = {
+    private static final String[] startValues = {
+            ("01101010000010011110011001100111"), ("10111011011001111010111010000101"), ("00111100011011101111001101110010"),
+            ("10100101010011111111010100111010"), ("01010001000011100101001001111111"), ("10011011000001010110100010001100"),
+            ("00011111100000111101100110101011"), ("01011011111000001100110100011001")
+    };
+
+
+    private static String[] initialValues = {
             ("01101010000010011110011001100111"), ("10111011011001111010111010000101"), ("00111100011011101111001101110010"),
             ("10100101010011111111010100111010"), ("01010001000011100101001001111111"), ("10011011000001010110100010001100"),
             ("00011111100000111101100110101011"), ("01011011111000001100110100011001")
@@ -40,13 +50,66 @@ public class Hash {
             ("00011111100000111101100110101011"), ("01011011111000001100110100011001")
     };
 
-    public static void main(String[] args) {
-        String input = "abc";
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        FileUtils fileUtils = new FileUtils();
+
+        String test1 = fileUtils.readLine("texts/random1000_1.txt");
+        String test2 = fileUtils.readLine("texts/random1000_2.txt");
+        ArrayList<String> test3 = fileUtils.readLines("texts/konstitucija.txt");
+
+        ArrayList<String> myHashesList = new ArrayList<>();
+        ArrayList<String> shaHashesList = new ArrayList<>();
+        ArrayList<String> md5HashesList = new ArrayList<>();
+        ArrayList<String> sha1HashesList = new ArrayList<>();
+
+        long start = System.nanoTime();
+        for(String line : test3){
+            myHashesList.add(hashFunction(line));
+        }
+        double elapsedTime = (System.nanoTime() - start) / Math.pow(10,9);
+        System.out.println("My hashes: " + elapsedTime + " seconds");
+
+        start = System.nanoTime();
+        for(String line : test3){
+            shaHashesList.add(sha256(line));
+        }
+        elapsedTime = (System.nanoTime() - start) / Math.pow(10,9);
+        System.out.println("SHA-256 hashes: " + elapsedTime + " seconds");
+
+        start = System.nanoTime();
+        for(String line : test3){
+            sha1HashesList.add(sha256(line));
+        }
+        elapsedTime = (System.nanoTime() - start) / Math.pow(10,9);
+        System.out.println("SHA-1 hashes: " + elapsedTime + " seconds");
+
+        start = System.nanoTime();
+        for(String line : test3){
+            md5HashesList.add(md5(line));
+        }
+        elapsedTime = (System.nanoTime() - start) / Math.pow(10,9);
+        System.out.println("MD5 hashes: " + elapsedTime + " seconds");
+
+        int sameValuesCount = 0;
+        for(int i = 0; i < shaHashesList.size(); i++){
+            if(myHashesList.get(i).equals(shaHashesList.get(i))){
+                sameValuesCount++;
+            }
+        }
+        System.out.println(sameValuesCount + "  " + shaHashesList.size());
+    }
+
+    private static String hashFunction(String input){
         String message = stringToBytes(input);
         String paddedMessage = padMessage(message);
         ArrayList<ArrayList<String>> messageSchedules = messageBlocks(paddedMessage);
         compression(messageSchedules);
-        System.out.println(hash(compressionValues));
+        String hash = hash(compressionValues);
+        for(int i = 0; i < startValues.length; i++){
+            compressionValues[i] = startValues[i];
+            initialValues[i] = startValues[i];
+        }
+        return hash;
     }
 
     //converts String input to bytes by converting each char to int (ASCII)
@@ -54,7 +117,8 @@ public class Hash {
         StringBuilder message = new StringBuilder();
 
         for(int i = 0; i < input.length(); ++i) {
-            message.append(String.format("%08d", Integer.parseInt(Integer.toBinaryString(input.charAt(i)))));
+            String binaryString = new BigInteger((int) input.charAt(i) + "").toString(2);
+            message.append(("00000000" + binaryString).substring(binaryString.length()));
         }
 
         return message.toString();
@@ -63,7 +127,7 @@ public class Hash {
     //pads message to contain 512 bit chunks
     private static String padMessage(String message){
         int pad = 512 - message.length()%512;
-        if(pad >= 65){
+        if(pad >= 64){
             String messageLengthBinary = Integer.toBinaryString(message.length());
             String repeated = new String(new char[pad - 1 - messageLengthBinary.length()]).replace("\0", "0");
             return message + "1" + repeated + messageLengthBinary;
@@ -231,6 +295,7 @@ public class Hash {
             for(int j = 0; j < compressionValues.length; j++){
                 compressionValues[j] = sum(initialValues[j], compressionValues[j]);
             }
+            System.arraycopy(compressionValues, 0, initialValues, 0, initialValues.length);
         }
     }
 
@@ -238,10 +303,29 @@ public class Hash {
         StringBuilder hash = new StringBuilder();
         for(String compressionValue : compressionValues){
             String hexStr = new BigInteger(compressionValue, 2).toString(16);
-            hash.append(hexStr);
+            hash.append(("00000000" + hexStr).substring(hexStr.length()));
         }
-
         return hash.toString();
     }
 
+    private static String sha256(String input) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = messageDigest.digest(input.getBytes(StandardCharsets.UTF_8));
+        BigInteger hash = new BigInteger(1, hashBytes);
+        return hash.toString(16);
+    }
+
+    private static String sha1(String input) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+        byte[] hashBytes = messageDigest.digest(input.getBytes(StandardCharsets.UTF_8));
+        BigInteger hash = new BigInteger(1, hashBytes);
+        return hash.toString(16);
+    }
+
+    private static String md5(String input) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        byte[] hashBytes = messageDigest.digest(input.getBytes(StandardCharsets.UTF_8));
+        BigInteger hash = new BigInteger(1, hashBytes);
+        return hash.toString(16);
+    }
 }
