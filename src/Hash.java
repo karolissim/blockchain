@@ -22,21 +22,25 @@ public class Hash {
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
 
+        ArrayList<String> test5 = stringUtils.readFromFile(ONE_CHAR_1);
+        ArrayList<String> test6 = stringUtils.readFromFile(ONE_CHAR_2);
         ArrayList<String> test1 = stringUtils.readFromFile(RANDOM_1000_1);
         ArrayList<String> test2 = stringUtils.readFromFile(RANDOM_1000_1_DIF);
         ArrayList<String> test3 = stringUtils.readFromFile(SAMPLE_TEXT);
         ArrayList<String> test4 = stringUtils.readFromFile(EMPTY);
 
-        System.out.println("1100 symbols: " + hash.hashFunction(test1.get(0)));
-        System.out.println("1100 symbols (one different symbol): " + hash.hashFunction(test2.get(0)));
-        System.out.println("empty file hash: " + hash.hashFunction(test4.get(0)));
+//        System.out.println("1 char: " + hash.hashFunction(test5.get(0)) + " " + hash.hashFunction(test5.get(0)).length());
+//        System.out.println("1 char dif: " + hash.hashFunction(test6.get(0)) + " " + hash.hashFunction(test6.get(0)).length());
+//        System.out.println("1100 symbols: " + hash.hashFunction(test1.get(0)) + " " + hash.hashFunction(test1.get(0)).length());
+//        System.out.println("1100 symbols (one different symbol): " + hash.hashFunction(test2.get(0)) + " " + hash.hashFunction(test2.get(0)).length());
+//        System.out.println("empty file hash: " + hash.hashFunction(test4.get(0)) + " " + hash.hashFunction(test4.get(0)).length());
 
-        compareAlgorithms(test3);
+//        compareAlgorithms(test3);
 
-        comparePairs(stringUtils.generateRandomStrings(10));
-        comparePairs(stringUtils.generateRandomStrings(100));
-        comparePairs(stringUtils.generateRandomStrings(500));
-        comparePairs(stringUtils.generateRandomStrings(1000));
+        comparePairs(stringUtils.generateRandomStrings(10), 10);
+        comparePairs(stringUtils.generateRandomStrings(100), 100);
+        comparePairs(stringUtils.generateRandomStrings(500), 500);
+        comparePairs(stringUtils.generateRandomStrings(1000), 1000);
 
 //        int sameValuesCount = 0;
 //        for(int i = 0; i < shaHashesList.size(); i++){
@@ -104,11 +108,11 @@ public class Hash {
         return hash.toString(16);
     }
 
-    private static void comparePairs(ArrayList<Pair<String,String>> randomStringPair){
+    private static void comparePairs(ArrayList<Pair<String,String>> randomStringPair, int length){
         int count = 0;
         for(Pair<String, String> pair : randomStringPair){
-            if(pair.getLeft().equals(pair.getRight())) count++;
+            if(hash.hashFunction(pair.getLeft()).equals(hash.hashFunction(pair.getRight()))) count++;
         }
-        System.out.println("count of same pairs: " + count);
+        System.out.println("repetition count of randomly generated string pairs (" + length + "): " + count);
     }
 }
