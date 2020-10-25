@@ -1,3 +1,5 @@
+package hash;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 
@@ -75,15 +77,14 @@ public class HashAlgorithm {
 
     private String padMessage(String message){
         int pad = 512 - message.length()%512;
+        String messageLengthBinary = Integer.toBinaryString(message.length());
+        String repeated;
         if(pad >= 64){
-            String messageLengthBinary = Integer.toBinaryString(message.length());
-            String repeated = new String(new char[pad - 1 - messageLengthBinary.length()]).replace("\0", "0");
-            return message + "1" + repeated + messageLengthBinary;
+            repeated = new String(new char[pad - 1 - messageLengthBinary.length()]).replace("\0", "0");
         } else {
-            String messageLengthBinary = Integer.toBinaryString(message.length());
-            String repeated = new String(new char[pad + 511 - messageLengthBinary.length()]).replace("\0", "0");
-            return message + "1" + repeated + messageLengthBinary;
+            repeated = new String(new char[pad + 511 - messageLengthBinary.length()]).replace("\0", "0");
         }
+        return message + "1" + repeated + messageLengthBinary;
     }
 
 
