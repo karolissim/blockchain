@@ -1,33 +1,62 @@
 package bitcoin
 
 import hash.HashAlgorithm
+import java.sql.Timestamp
 import kotlin.streams.asSequence
 
 private val hashAlgorithm = HashAlgorithm()
 val userList: ArrayList<User> = arrayListOf()
-val transactionList: ArrayList<Transaction> = arrayListOf()
+var transactionList: MutableList<Transaction> = arrayListOf()
 val transactionListIds: ArrayList<String> = arrayListOf()
 
 val blockchain: ArrayList<Block> = arrayListOf()
 
 fun main() {
 
-    for(i in 0..100){
+    for(i in 0..100) {
         userList.add(generateUser(i))
     }
-    for(i in 0..9) println(userList[i].balance)
-    println()
 
-    for(i in 0..1000){
+    for(i in 0..1000) {
         transactionList.add(generateTransaction(userList))
         transactionListIds.add(transactionList[i].transactionId)
     }
 
+    var index = 0
+    while(transactionList.size >= 100) {
+        val tempTransactionIdList = arrayListOf<String>()
+        val tempTransactionList = transactionList.subList(0, 100)
+        tempTransactionList.forEach { tempTransactionIdList.add(it.transactionId) }
+        val transactionMerkleHash = merkleTree(tempTransactionIdList)
+        when(blockchain.size) {
+            0 -> {
+                val block = Block(
+                        timeStamp = Timestamp(System.currentTimeMillis()),
+                        merkelRoot = transactionMerkleHash,
+                        transactions = tempTransactionList
+                )
+                block.mine()
+                blockchain.add(block)
+            }
+            else -> {
+                val block = Block(
+                        previousBlock = blockchain[blockchain.size - 1].getHash(),
+                        timeStamp = Timestamp(System.currentTimeMillis()),
+                        merkelRoot = transactionMerkleHash,
+                        transactions = tempTransactionList
+                )
+                block.mine()
+                blockchain.add(block)
+            }
+        }
+        index++
+        transactionList = transactionList.subList(100, transactionList.size)
+    }
 
-
-    println(merkleTree(transactionListIds))
+    blockchain.forEach {
+        println(it.getHash())
+    }
 }
-
 
 private fun generateUser(index: Int): User{
     val name = "user$index"
@@ -59,10 +88,10 @@ private fun generateTransaction(users: ArrayList<User>): Transaction{
     return Transaction(txId, senderKey, receiverKey, amount)
 }
 
-private fun merkleTree(transactionsId: ArrayList<String>): String{
+private fun merkleTree(transactionsId: MutableList<String>): String{
     val tempTxList: ArrayList<String> = arrayListOf()
     for(i in 0 until transactionsId.size - 1 step 2){
-        tempTxList.add(hashAlgorithm.hashFunction(transactionsId[i]+ transactionsId[i + 1]))
+        tempTxList.add(hashAlgorithm.hashFunction(transactionsId[i] + transactionsId[i + 1]))
     }
     return if(tempTxList.size == 1) tempTxList[0]
     else merkleTree(tempTxList)

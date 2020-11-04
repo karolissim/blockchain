@@ -1,8 +1,9 @@
 package bitcoin
 
+import hash.HashAlgorithm
 import java.sql.Timestamp
 
-data class User(val name: String, val publicKey: String, var balance: Double){
+data class User(private val name: String, val publicKey: String, var balance: Double){
     fun isBalanceValid(amount: Double): Boolean{
         return balance >= amount
     }
@@ -26,16 +27,30 @@ data class Transaction(val transactionId: String, val senderKey: String, val rec
 }
 
 data class Block(
-        val previousBlock: String = "0",
-        var currentBlock: String = "",
-        val timeStamp: Timestamp,
-        val version: String = "0.1",
-        val merkelRoot: String = "",
-        var nonce: Int = 0,
-        val difficultyTarget: String = "",
-        val transactions: ArrayList<Transaction> = arrayListOf()){
-    fun mine(){
+        private val previousBlock: String = "0",
+        private var currentBlock: String = "",
+        private val timeStamp: Timestamp,
+        private val version: String = "0.1",
+        private val merkelRoot: String,
+        private var nonce: Int = 0,
+        private val difficultyTarget: Int = 3,
+        private val transactions: MutableList<Transaction>){
 
+    fun mine(){
+        val target = String(CharArray(difficultyTarget)).replace('\u0000', '0')
+        calculateHash()
+        while(currentBlock.substring(0, difficultyTarget) != target){
+            nonce++
+            calculateHash()
+        }
+    }
+
+    private fun calculateHash(){
+        currentBlock = HashAlgorithm().hashFunction(previousBlock + timeStamp.toString() + version + merkelRoot + difficultyTarget.toString() + nonce.toString())
+    }
+
+    fun getHash(): String {
+        return currentBlock
     }
 }
 
