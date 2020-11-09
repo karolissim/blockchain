@@ -1,6 +1,6 @@
 package bitcoin
 
-import hash.HashAlgorithm
+import util.HashAlgorithm
 import java.sql.Timestamp
 
 data class User(private val name: String, val publicKey: String, var balance: Double){

@@ -1,17 +1,24 @@
 package tx
 
-import hash.HashAlgorithm
+import util.HashAlgorithm
 
-class Transaction(private val senderId: String, private val receiverId: String, private val value: Double, var transactionInputs: ArrayList<TransactionInput>) {
-    var transactionId: String? = null
-    var transactionOutputs: ArrayList<TransactionOutput> = arrayListOf()
+class Transaction(private val senderId: String, private val receiverId: String, private val value: Double, var txInputs: ArrayList<TransactionInput>) {
 
-    fun generateTransactionId() {
-        transactionId = HashAlgorithm().hashFunction(senderId + receiverId + value)
+    companion object {
+        var txIndex = 0
+    }
+
+    var txId: String? = null
+    private var currentTxIndex: Int? = null
+    var txOutputs: ArrayList<TransactionOutput> = arrayListOf()
+
+    init {
+        txId = HashAlgorithm().hashFunction(senderId + receiverId + value + txIndex.toString())
+        currentTxIndex = txIndex
+        txIndex++
     }
 
     fun verifyTransaction(): Boolean {
-        return transactionId == HashAlgorithm().hashFunction(senderId + receiverId + value)
+        return txId == HashAlgorithm().hashFunction(senderId + receiverId + value + currentTxIndex)
     }
-
 }

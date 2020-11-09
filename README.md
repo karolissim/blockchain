@@ -18,7 +18,7 @@ Hashing function realisation
 ![Konstitucija hashing](https://github.com/knuckl35/blockchain/blob/master/testImages/konstitucija.png)
 3. Tested konstitucija.txt file with different hashing algorithms by using their libraries in java. Test results:
 ![Benchmark](https://github.com/knuckl35/blockchain/blob/master/testImages/benchmark.png)
-4. Lastly generated different length pairs and tested if hash function provided different outputs
+4. Lastly generated different length pairs and tested if util function provided different outputs
 ![Benchmark](https://github.com/knuckl35/blockchain/blob/master/testImages/repetition.png)
 
 ### Results

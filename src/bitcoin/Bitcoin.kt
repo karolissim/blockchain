@@ -1,6 +1,6 @@
 package bitcoin
 
-import hash.HashAlgorithm
+import util.HashAlgorithm
 import java.sql.Timestamp
 import kotlin.streams.asSequence
 

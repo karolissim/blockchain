@@ -1,4 +1,4 @@
-package hash;
+package util;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

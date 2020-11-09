@@ -1,6 +1,6 @@
 package tx
 
-import hash.HashAlgorithm
+import util.HashAlgorithm
 
 class TransactionOutput(val receiverId: String, val value: Double, val transactionId: String) {
     var id: String? = null
