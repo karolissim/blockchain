@@ -52,6 +52,10 @@ data class Block(
     fun getHash(): String {
         return currentBlock
     }
+
+    fun getNonce(): Int {
+        return nonce
+    }
 }
 
 

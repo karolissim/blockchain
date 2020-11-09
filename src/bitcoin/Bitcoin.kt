@@ -54,7 +54,7 @@ fun main() {
     }
 
     blockchain.forEach {
-        println(it.getHash())
+        println("${it.getHash()} ${it.getNonce()} ")
     }
 }
 
