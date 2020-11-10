@@ -4,10 +4,10 @@ import tx.Transaction
 import tx.TransactionInput
 import tx.TransactionOutput
 
-class User(private val username: String, private val publicKey: String) {
+class User(val publicKey: String) {
     private val UTXOs: MutableMap<String, TransactionOutput> = mutableMapOf()
 
-    private fun getBalance(): Double {
+    fun getBalance(): Double {
         var balance = 0.0
         for ((_, value) in MyBlock.UTXOs) {
             if (value.belongsToMe(publicKey)) {

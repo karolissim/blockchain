@@ -5,16 +5,21 @@ import tx.Transaction
 import java.sql.Timestamp
 
 class Block(private val previousBlock: String = "0",
-            private var currentBlock: String = "",
             private val timeStamp: Timestamp,
             private val version: String = "0.1",
             private var nonce: Int = 0) {
 
+    private lateinit var currentBlock: String
     private val transactions: MutableMap<String, Transaction> = mutableMapOf()
     private var merkleRoot: String? = null
 
-    fun addTransaction(transaction: Transaction) {
-        transactions[transaction.txId!!] = transaction
+    fun addTransaction(transaction: Transaction?) {
+        if(transaction != null) {
+            if (previousBlock != "0") {
+                transaction.verifyTransaction()
+            }
+            transactions[transaction.txId!!] = transaction
+        }
     }
 
     fun mine(difficultyTarget: Int) {
@@ -46,6 +51,10 @@ class Block(private val previousBlock: String = "0",
 
     fun getHash(): String {
         return currentBlock
+    }
+
+    fun getPreviousBlock(): String {
+        return previousBlock
     }
 
     fun getNonce(): Int {
