@@ -3,7 +3,7 @@ package tx
 import blockchain.MyBlock
 import util.HashAlgorithm
 
-class Transaction(val senderId: String, val receiverId: String, val value: Double, var txInputs: ArrayList<TransactionInput>?) {
+class Transaction(private val senderId: String, val receiverId: String, val value: Double, var txInputs: ArrayList<TransactionInput>?) {
 
     companion object {
         var txIndex = 0
@@ -14,13 +14,13 @@ class Transaction(val senderId: String, val receiverId: String, val value: Doubl
     var txOutputs: ArrayList<TransactionOutput> = arrayListOf()
 
     init {
-        txId = HashAlgorithm().hashFunction(senderId + receiverId + value + txIndex.toString())
+        txId = HashAlgorithm().hashFunction(senderId + receiverId + value)
         currentTxIndex = txIndex
         txIndex++
     }
 
     private fun verifyTransactionId(): Boolean {
-        return txId == HashAlgorithm().hashFunction(senderId + receiverId + value + currentTxIndex)
+        return txId == HashAlgorithm().hashFunction(senderId + receiverId + value)
     }
 
     fun verifyTransaction(): Boolean {
@@ -42,7 +42,36 @@ class Transaction(val senderId: String, val receiverId: String, val value: Doubl
         }
 
         for(input in txInputs!!) {
-            MyBlock.UTXOs.remove(input.UTXO!!.id)
+            if(input.UTXO != null) {
+                MyBlock.UTXOs.remove(input.UTXO!!.id)
+            }
+        }
+
+        return true
+    }
+
+    fun verifyTransaction(index: Int): Boolean {
+//        if(!verifyTransactionId()) {
+//            println("Failed to verify transaction id")
+//            return false
+//        }
+
+        for(inputs in txInputs!!) {
+            inputs.UTXO = MyBlock.tempUTXOList[index][inputs.transactionId]
+        }
+
+        val leftBalance = getInputValue() - value
+        txOutputs.add(TransactionOutput(senderId, leftBalance, txId!!))
+        txOutputs.add(TransactionOutput(receiverId, value, txId!!))
+
+        for(output in txOutputs) {
+            MyBlock.tempUTXOList[index][output.id!!] = output
+        }
+
+        for(input in txInputs!!) {
+            if(input.UTXO != null) {
+                MyBlock.tempUTXOList[index].remove(input.UTXO!!.id)
+            }
         }
 
         return true
@@ -51,7 +80,9 @@ class Transaction(val senderId: String, val receiverId: String, val value: Doubl
     private fun getInputValue(): Double {
         var totalAmount = 0.0
         for(input in txInputs!!) {
-            totalAmount += input.UTXO!!.value
+            if(input.UTXO != null) {
+                totalAmount += input.UTXO!!.value
+            }
         }
         return totalAmount
     }
