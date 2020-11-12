@@ -10,10 +10,10 @@ import kotlin.streams.asSequence
 class MyBlock {
 
     companion object {
-        private val blockchain: ArrayList<Block> = arrayListOf()
-        var UTXOs: MutableMap<String, TransactionOutput> = mutableMapOf()
-        private val userList: ArrayList<User> = arrayListOf()
         private val transactionPool: ArrayList<Transaction?> = arrayListOf()
+        var UTXOs: MutableMap<String, TransactionOutput> = mutableMapOf()
+        private val blockchain: ArrayList<Block> = arrayListOf()
+        private val userList: ArrayList<User> = arrayListOf()
         private const val txDifficulty = 3
         var previousBlockHash = "0"
         private var tempTransactionPool: ArrayList<MutableMap<Int, Transaction?>> = arrayListOf()
@@ -33,7 +33,7 @@ class MyBlock {
                 transactionPool.add(userList[(0..9).random()].sendMoney(userList[(0..9).random()].publicKey, userList[(0..9).random()].getBalance() * 0.05))
             }
 
-            for (j in (0..1)) {
+            for (j in (0..3)) {
                 tempTransactionPool.add(generateTransactionMap())
                 tempUTXOList.add(UTXOs)
             }
@@ -71,6 +71,37 @@ class MyBlock {
                                 }
                             })
                         }
+
+                        thirdMiner = launch(Dispatchers.IO) {
+                            mine(2, object : JobCallback {
+                                override suspend fun onFinish(status: Boolean, index: Int?, block: Block?) {
+                                    if (status) {
+                                        if(!isCalled) {
+                                            isCalled = true
+                                            blockchain.add(block!!)
+                                            previousBlockHash = block.getHash()
+                                            cancelJob(index!!)
+                                        }
+                                    }
+                                }
+                            })
+                        }
+
+                        fourthMiner = launch(Dispatchers.IO) {
+                            mine(3, object : JobCallback {
+                                override suspend fun onFinish(status: Boolean, index: Int?, block: Block?) {
+                                    if (status) {
+                                        if(!isCalled) {
+                                            isCalled = true
+                                            blockchain.add(block!!)
+                                            previousBlockHash = block.getHash()
+                                            cancelJob(index!!)
+                                        }
+                                    }
+                                }
+                            })
+                        }
+
                         delay(2000L)
                     } else isCalled = false
                 }
@@ -147,6 +178,8 @@ class MyBlock {
         private fun cancelJob(index: Int) {
             firstMiner!!.cancel()
             secondMiner!!.cancel()
+            thirdMiner!!.cancel()
+            fourthMiner!!.cancel()
 
             UTXOs = tempUTXOList[index]
             for((_, value) in tempTransactionPool[index]){
@@ -156,7 +189,7 @@ class MyBlock {
             tempUTXOList.clear()
             tempTransactionPool.clear()
 
-            for (j in (0..1)) {
+            for (j in (0..3)) {
                 tempTransactionPool.add(generateTransactionMap())
                 tempUTXOList.add(UTXOs)
             }
