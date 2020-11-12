@@ -3,20 +3,12 @@ package tx
 import blockchain.MyBlock
 import util.HashAlgorithm
 
-class Transaction(private val senderId: String, val receiverId: String, val value: Double, var txInputs: ArrayList<TransactionInput>?) {
-
-    companion object {
-        var txIndex = 0
-    }
-
+class Transaction(private val senderId: String, val receiverId: String, val value: Double, private var txInputs: ArrayList<TransactionInput>?) {
     var txId: String? = null
-    private var currentTxIndex: Int? = null
     var txOutputs: ArrayList<TransactionOutput> = arrayListOf()
 
     init {
         txId = HashAlgorithm().hashFunction(senderId + receiverId + value)
-        currentTxIndex = txIndex
-        txIndex++
     }
 
     private fun verifyTransactionId(): Boolean {
@@ -51,11 +43,6 @@ class Transaction(private val senderId: String, val receiverId: String, val valu
     }
 
     fun verifyTransaction(index: Int): Boolean {
-//        if(!verifyTransactionId()) {
-//            println("Failed to verify transaction id")
-//            return false
-//        }
-
         for(inputs in txInputs!!) {
             inputs.UTXO = MyBlock.tempUTXOList[index][inputs.transactionId]
         }

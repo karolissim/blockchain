@@ -33,7 +33,7 @@ data class Block(
         private val version: String = "0.1",
         private val merkelRoot: String,
         private var nonce: Int = 0,
-        private val difficultyTarget: Int = 3,
+        private val difficultyTarget: Int = 2,
         private val transactions: MutableList<Transaction>){
 
     fun mine(){
