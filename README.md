@@ -62,5 +62,4 @@ private fun verifyTransactionId(): Boolean {
 6. Process repeats until there is no more valid or possible transactions
 
 ### Results
-This release isn't final version, although blockchain and transaction model works properly 
-some coroutines improvements are needed for a program to work fully and properly.   
+Fully finished blockchain implementation, with four workers that work on different threads to increase performance of mining.   
