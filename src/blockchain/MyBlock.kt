@@ -146,6 +146,7 @@ class MyBlock {
         }
 
         private fun printData() {
+            println("Created ${blockchain.size} blocks")
             for (block in blockchain) {
                 println("currentBlock: ${block.getHash()} prevBlock: ${block.previousBlock}")
             }
